@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: foo
+spec:
+  ca:
+    secretName: foo-ca 
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: bar
+spec:
+  ca:
+    secretName: bar-ca 
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: istio-system
+spec:
+  ca:
+    secretName: bar-ca

@@ -1,0 +1,66 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  components:
+    pilot:
+      k8s:
+        env:
+          - name: CERT_SIGNER_DOMAIN
+            value: sgx.intel.com
+          - name: EXTERNAL_CA
+            value: ISTIOD_RA_KUBERNETES_API
+          - name: PILOT_CERT_PROVIDER
+            value: k8s.io/sgx.intel.com/istio-system
+        overlays:
+          - kind: ClusterRole
+            name: istiod-clusterrole-istio-system
+            patches:
+              - path: rules[-1]
+                value: |
+                  apiGroups:
+                  - certificates.k8s.io
+                  resourceNames:
+                  - sgx.intel.com/*
+                  resources:
+                  - signers
+                  verbs:
+                  - approve
+  meshConfig:
+    caCertificates:
+    # EDITME: Replace the below certificate with the 
+    # kubectl get secrets -n sgx-operator sgx.intel.com.istio-system -o jsonpath='{.data.tls\.crt}' | base64 -d
+    - pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIEbDCCAtSgAwIBAgIILMYbKoCsIVcwDQYJKoZIhvcNAQELBQAwVDEdMBsGA1UE
+        ChMUSW50ZWwoUikgQ29ycG9yYXRpb24xMzAxBgNVBAMTKlNHWCBzZWxmLXNpZ25l
+        ZCByb290IGNlcnRpZmljYXRlIGF1dGhvcml0eTAeFw0yMjAxMjAxMzAwNTdaFw0y
+        MzAxMjAxMzAwNTdaMFQxHTAbBgNVBAoTFEludGVsKFIpIENvcnBvcmF0aW9uMTMw
+        MQYDVQQDEypTR1ggc2VsZi1zaWduZWQgcm9vdCBjZXJ0aWZpY2F0ZSBhdXRob3Jp
+        dHkwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAwggGKAoIBgQCyBy37PbSQNZPGnL3/
+        /C9QMXkbQF9ph/1vk2Lz3AlBJKH5cmmYAfVEsRsKWWm/TXIx0z6t8QRXmyWBx+0g
+        525AmQiAEnkgISNeJhtE90kQwzDhj6ULD8D+LV9vwtDtEdtD+YZhmptnLsUwKo9T
+        j35jHtDhyfUggq5ryVfZd30PK4muZ737nDENjlKt0WRtmBku61x+/GA2uIYYg1Wu
+        im1NLMsZzGPXRLv4Gh+xs8ja7kn9vhALO3S73k/6xo+2IScl6IGlGzXnLZLq6F73
+        lOz5Kt0jGdCrSFws1ovFwjyK1zD1VqTpmf7frLGxY2X53IhTJU2ArX8W4NQCCsbR
+        YauiTMZ867DBW22m2OHI9vhCJe/m6nB2eTyaR6gQsXaV3bha4N0GsIY3DyPmgaE8
+        I/nOpAGqjj/drCFwCpsae35pwvG24n7pIUMPv8ZbaMmbjhIMUYSp0Jp/0hQejNu6
+        SzM+ayyohcxRd57e+JuHQYcBui7MwzsQYB4Tv95X0NXB19cCAwEAAaNCMEAwDgYD
+        VR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFJFTwtiDUx95
+        kVaLMEkFbpZIQPrOMA0GCSqGSIb3DQEBCwUAA4IBgQBmwTk7DJ8Nu5ShRMjQMCQS
+        Uj18fcwHMVXHPiyDW7bKq81Pb/z1lQuHOor17wWo3tZoYiA29O0SVbc0nWGLUFVp
+        Ga+ggKb9MSF/6Z4X3A3KQBdYRL1qkrJENI4I5yat/IHZG9zeALenOsyif4WAmzh0
+        +1Eo54THavGW5xEkmOVRNwBFr5bFUQwCRtSrFvMel4k2iDTYljdpiv48K01MuBgY
+        ZJ9H85xeRuvkbTrahuKGr8/2YuRTYYqA4QsMxIl+M/bxMcGjX8qtQO9JQN0jPZOb
+        Rx5bO/NadUs7Vo8K1ilDX+2Nj17xOWoHTnWzB8On5wIEvXvb0L1XX/JqVaNg0OBG
+        Zzf/BQb5Z6bHU67iMjSAyFXjuRje8GFD+yyvfTkosH7dO+Lq6JGzWvl3d7+pJlYO
+        zMKt5kUgbaNbHKrdp9mW5PQtbbEladYFOBlZCgUv4bBvInVGFVVSr4EnQrGxTBft
+        kG6xrlTf8gmBt7rTmSl13VK2IBJtf0J8PFjM926fpNo=
+        -----END CERTIFICATE-----
+      certSigners: 
+      - sgx.intel.com/istio-system
+  values:
+    pilot:
+      image: registry.fi.intel.com/staging/pilot:latest
+    global:
+      proxy:
+        image: registry.fi.intel.com/staging/proxyv2:latest

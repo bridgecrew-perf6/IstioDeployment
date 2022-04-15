@@ -1,0 +1,335 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: sgx-operator
+  name: sgx-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sgx-operator-serviceaccount
+  namespace: sgx-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sgx-operator-leader-election-role
+  namespace: sgx-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sgx-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sgx-operator-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: sgx-operator-role
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - certificates.k8s.io
+  resourceNames:
+  - sgx.intel.com/istio-system
+  resources:
+  - signers
+  verbs:
+  - sign
+- apiGroups:
+  - sgx.intel.com
+  resources:
+  - quoteattestations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sgx.intel.com
+  resources:
+  - quoteattestations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - sgx.intel.com
+  resources:
+  - quoteattestations/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sgx-operator-leader-election-rolebinding
+  namespace: sgx-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sgx-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: sgx-operator-serviceaccount
+  namespace: sgx-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sgx-operator-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sgx-operator-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: sgx-operator-serviceaccount
+  namespace: sgx-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sgx-operator-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sgx-operator-role
+subjects:
+- kind: ServiceAccount
+  name: sgx-operator-serviceaccount
+  namespace: sgx-operator
+---
+apiVersion: v1
+data:
+  sgx_operator_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8083
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: bb9c3a43.sgx.intel.com
+kind: ConfigMap
+metadata:
+  name: sgx-operator-config
+  namespace: sgx-operator
+---
+apiVersion: v1
+data:
+  sopin: V0lwbUJCybc2Oc6M06Vz
+  userpin: U3BnbGIyTUl3ZV9lSHUy
+kind: Secret
+metadata:
+  name: sgx-operator-pkcs11-conf
+  namespace: sgx-operator
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: sgx-operator
+  name: sgx-operator-metrics-service
+  namespace: sgx-operator
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: sgx-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: sgx-operator
+  name: sgx-operator-app
+  namespace: sgx-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: sgx-operator
+  template:
+    metadata:
+      annotations:
+        sgx.intel.com/quote-provider: aesmd
+      labels:
+        control-plane: sgx-operator
+    spec:
+      containers:
+      - args:
+        - --leader-elect
+        - --zap-devel
+        - --zap-log-level=5
+        - --metrics-bind-address=:8082
+        - --health-probe-bind-address=:8083
+        - --user-pin=$USER_PIN
+        - --so-pin=$SO_PIN
+        - --signer-names=sgx.intel.com/istio-system
+        - --use-key-manager=false
+        command:
+        - /manager
+        env:
+        - name: USER_PIN
+          valueFrom:
+            secretKeyRef:
+              key: userpin
+              name: sgx-operator-pkcs11-conf
+        - name: SO_PIN
+          valueFrom:
+            secretKeyRef:
+              key: sopin
+              name: sgx-operator-pkcs11-conf
+        image: registry.fi.intel.com/staging/sgx-operator:21.12.01
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 180
+        name: operator
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+            sgx.intel.com/enclave: 1
+            sgx.intel.com/epc: 512Ki
+          requests:
+            cpu: 100m
+            memory: 20Mi
+            sgx.intel.com/enclave: 1
+            sgx.intel.com/epc: 512Ki
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /sgx-operator/tokens
+          name: tokens-dir
+      initContainers:
+      - command:
+        - /bin/chown
+        - -R
+        - 5000:5000
+        - /sgx-operator/tokens
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        name: init
+        volumeMounts:
+        - mountPath: /sgx-operator/tokens
+          name: tokens-dir
+      serviceAccountName: sgx-operator-serviceaccount
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - hostPath:
+          path: /var/lib/sgx-operator/tokens
+          type: DirectoryOrCreate
+        name: tokens-dir

@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authservice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authservice
+  namespace: authservice
+  labels:
+    app: authservice
+spec:
+  type: ClusterIP
+  ports:
+  - port: 10003
+    protocol: TCP
+  selector:
+    app: authservice
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authservice
+  namespace: authservice
+  labels:
+    app: authservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authservice
+  template:
+    metadata:
+      labels:
+        app: authservice
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+      - name: authservice
+#        image: docker.pkg.github.com/istio-ecosystem/authservice/authservice:0.4.0-2a89ce7
+        image: registry.fi.intel.com/service-mesh/authservice:0.4.0-2a89ce7
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10003
+        volumeMounts:
+        - name: authservice-configmap-volume
+          mountPath: /etc/authservice
+      volumes:
+      - name: authservice-configmap-volume
+        configMap:
+          name: authservice-configmap

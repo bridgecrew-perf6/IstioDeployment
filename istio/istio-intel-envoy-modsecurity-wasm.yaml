@@ -1,0 +1,13 @@
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: mod-example
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway 
+  url: oci://registry.fi.intel.com/leyao/envoy-modsecurity-wasm-plugin:0.1.0
+  imagePullPolicy: Always
+  pluginConfig:
+    "rules": "SecRuleEngine On \n SecRule ARGS:param1 \"attack\" \"id:1,phase:1,deny,status:200\""

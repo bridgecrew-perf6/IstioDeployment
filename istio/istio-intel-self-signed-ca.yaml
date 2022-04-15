@@ -1,0 +1,73 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istio-intel-self-signed-ca
+spec:
+  profile: default
+  components:
+    pilot:
+      k8s:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 40Mi
+            sgx.intel.com/enclave: "1"
+            sgx.intel.com/epc: 512Ki
+            sgx.intel.com/provision: "1"
+          limits:
+            cpu: 100m
+            memory: 60Mi
+            sgx.intel.com/enclave: "1"
+            sgx.intel.com/epc: 512Ki
+            sgx.intel.com/provision: "1"
+        env:
+          - name:  USE_SGX_PROTECTED_CERTS
+            value: "true"
+        overlays:
+          - apiVersion: apps/v1
+            kind: Deployment
+            name: istiod
+            patches:
+            - path: spec.template.spec.containers[0].volumeMounts[-1]
+              value: |
+                name: ctk
+                mountPath: /opt/intel/cryptoapitoolkit/
+            - path: spec.template.spec.containers[0].volumeMounts[-1]
+              value: |
+                name: ca-certs-store
+                mountPath: /opt/intel/cryptoapitoolkit/tokens
+            - path: spec.template.spec.volumes[-1]
+              value: |
+                name: ctk 
+                hostPath:
+                  path : /var/run/ctk
+                  type: DirectoryOrCreate
+            - path: spec.template.spec.volumes[-1]
+              value: |
+                name: ca-certs-store
+                hostPath:
+                  path : /var/run/ctk/tokens
+  values:
+    pilot:
+      hub: registry.fi.intel.com/istio-intel
+      image: pilot-sgx
+      tag: 1.10.2
+      resources:
+        limits:
+          cpu: 100m
+          memory: 60Mi
+          sgx.intel.com/enclave: "1"
+          sgx.intel.com/epc: 512Ki
+          sgx.intel.com/provision: "1"
+        requests:
+          cpu: 100m
+          memory: 40Mi
+          sgx.intel.com/enclave: "1"
+          sgx.intel.com/epc: 512Ki
+          sgx.intel.com/provision: "1"
+    global:
+      proxy:
+        image: registry.fi.intel.com/istio-intel/proxyv2:1.10.2
+    telemetry:
+      enabled: false

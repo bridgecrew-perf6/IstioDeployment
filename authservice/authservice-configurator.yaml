@@ -1,0 +1,476 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authservice-webhook
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: authservice-webhook/authservice-webhook-serving-cert
+    controller-gen.kubebuilder.io/version: v0.2.5
+  name: chains.authcontroller.intel.com
+spec:
+  group: authcontroller.intel.com
+  names:
+    kind: Chain
+    listKind: ChainList
+    plural: chains
+    singular: chain
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: Chain is the Schema for the chains API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ChainSpec defines the desired state of Chain
+          properties:
+            authorizationUri:
+              type: string
+            callbackUri:
+              type: string
+            clientId:
+              type: string
+            clientSecret:
+              type: string
+            configuration:
+              type: string
+            cookieNamePrefix:
+              type: string
+            issuer:
+              type: string
+            jwks:
+              type: string
+            jwksUri:
+              type: string
+            match:
+              description: Desired state of cluster
+              properties:
+                criteria:
+                  type: string
+                equality:
+                  type: string
+                header:
+                  type: string
+                prefix:
+                  type: string
+              type: object
+            tokenUri:
+              type: string
+            trustedCertificateAuthority:
+              type: string
+          type: object
+        status:
+          description: ChainStatus defines the observed state of Chain
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: authservice-webhook/authservice-webhook-serving-cert
+    controller-gen.kubebuilder.io/version: v0.2.5
+  name: configurations.authcontroller.intel.com
+spec:
+  group: authcontroller.intel.com
+  names:
+    kind: Configuration
+    listKind: ConfigurationList
+    plural: configurations
+    singular: configuration
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: Configuration is the Schema for the configurations API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ConfigurationSpec defines the desired state of Configuration
+          properties:
+            authService:
+              description: AuthService deployment name.
+              type: string
+            threads:
+              description: Threads is how many threads the server runs with.
+              type: integer
+          type: object
+        status:
+          description: ConfigurationStatus defines the observed state of Configuration
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: authservice-webhook-leader-election-role
+  namespace: authservice-webhook
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: authservice-webhook-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - authcontroller.intel.com
+  resources:
+  - chains
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - authcontroller.intel.com
+  resources:
+  - chains/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - authcontroller.intel.com
+  resources:
+  - configurations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - authcontroller.intel.com
+  resources:
+  - configurations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - security.istio.io
+  resources:
+  - requestauthentications
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: authservice-webhook-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: authservice-webhook-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: authservice-webhook-leader-election-rolebinding
+  namespace: authservice-webhook
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: authservice-webhook-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: authservice-webhook
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: authservice-webhook-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: authservice-webhook-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: authservice-webhook
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: authservice-webhook-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: authservice-webhook-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: authservice-webhook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: authservice-webhook-controller-manager-metrics-service
+  namespace: authservice-webhook
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authservice-webhook-webhook-service
+  namespace: authservice-webhook
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: authservice-webhook-controller-manager
+  namespace: authservice-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-addr=127.0.0.1:8080
+        - --enable-leader-election
+        command:
+        - /manager
+        image:  docker.io/intel/authservice-configurator:latest
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: authservice-webhook-serving-cert
+  namespace: authservice-webhook
+spec:
+  dnsNames:
+  - authservice-webhook-webhook-service.authservice-webhook.svc
+  - authservice-webhook-webhook-service.authservice-webhook.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: authservice-webhook-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: authservice-webhook-selfsigned-issuer
+  namespace: authservice-webhook
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: authservice-webhook/authservice-webhook-serving-cert
+  name: authservice-webhook-validating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: authservice-webhook-webhook-service
+      namespace: authservice-webhook
+      path: /validate-authcontroller-intel-com-v1-chain
+  failurePolicy: Fail
+  name: vchain.kb.io
+  rules:
+  - apiGroups:
+    - authcontroller.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - chains
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: authservice-webhook-webhook-service
+      namespace: authservice-webhook
+      path: /validate-authcontroller-intel-com-v1-configuration
+  failurePolicy: Fail
+  name: vconfiguration.kb.io
+  rules:
+  - apiGroups:
+    - authcontroller.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - configurations

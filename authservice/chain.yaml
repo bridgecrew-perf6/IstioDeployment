@@ -1,0 +1,60 @@
+apiVersion: authcontroller.intel.com/v1
+kind: Chain
+metadata:
+  name: chain-1
+  namespace: authservice
+spec:
+  authorizationUri: "https://float06.fi.intel.com/auth/realms/master/protocol/openid-connect/auth"
+  tokenUri: "https://float06.fi.intel.com/auth/realms/master/protocol/openid-connect/token"
+  callbackUri: "https://float06.fi.intel.com/keycloak/oauth/callback"
+  clientId: "test"
+  clientSecret: "3a79f2dc-dfed-4f56-a8ea-bd6fd3448a99"
+  cookieNamePrefix: "service-name"
+  issuer: "https://float06.fi.intel.com/auth/realms/master"
+  jwksUri: "http://float06.fi.intel.com/auth/realms/master/protocol/openid-connect/certs"
+  jwks: '{
+      "keys": [
+        {
+          "kid": "HdDUrtEg5plZR1pYhwcr5FiVVdijcVUdf-hdko_ugp0",
+          "kty": "RSA",
+          "alg": "RS256",
+          "use": "sig",
+          "n": "tLuaSAqHEkprQtcfmwyYSl2Z3eRYRSg0T7ew_H70zSRU49Pncaqu8OOgXEOpvKEczcctIpwYVh2AAa3u2Hzo3tUxGNRWqkvb_1Q9Dega1AVUljaQncMFAu0dlAjkzvZ4BSdRcSUaAuVvywwsNvbwkWOad89GROMzC71pgr94echeB_PELePnRnOZFEsEQ1cV78jz6Qa319hFhp5XRgGfA4Tn_lzjF5Y9uNRczk0MqRg3HoaeCPQPS_Q4LmjNnZ4eulJnNA7DyQpnfFlo6e0_eYKht_q9eGkQiLi2UnTHmRn3-DSsuj_OphTgIB6fmcm7FqJPLsWPHL_mv6A_y3phXw",
+          "e": "AQAB",
+          "x5c": [
+          "MIICmzCCAYMCBgF5ohd/rDANBgkqhkiG9w0BAQsFADARMQ8wDQYDVQQDDAZtYXN0ZXIwHhcNMjEwNTI1MDU1MzM5WhcNMzEwNTI1MDU1NTE5WjARMQ8wDQYDVQQDDAZtYXN0ZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC0u5pICocSSmtC1x+bDJhKXZnd5FhFKDRPt7D8fvTNJFTj0+dxqq7w46BcQ6m8oRzNxy0inBhWHYABre7YfOje1TEY1FaqS9v/VD0N6BrUBVSWNpCdwwUC7R2UCOTO9ngFJ1FxJRoC5W/LDCw29vCRY5p3z0ZE4zMLvWmCv3h5yF4H88Qt4+dGc5kUSwRDVxXvyPPpBrfX2EWGnldGAZ8DhOf+XOMXlj241FzOTQypGDcehp4I9A9L9DguaM2dnh66Umc0DsPJCmd8WWjp7T95gqG3+r14aRCIuLZSdMeZGff4NKy6P86mFOAgHp+ZybsWok8uxY8cv+a/oD/LemFfAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAEo/eRXWOeMadsYX6pktFoStu0RZWezPXb8vaVfvAOCEaiXRUQeerNik+KSsaeSmlnaRVwvOJs8zTByo9Gsg+3Q+GGQxC7gt8n+Zlj0uUVUMC8oZ+o4wUnsOnqk21hOcolPzJYcPzHWgjXB9kidsbZF/RtJjMP22KRIB4F+HHK71u9T/i5qCivaEST6UuwB0ahGRKtBXy+c6ux8nW7nNCw99bGndgx/1b+NElXZFs/8LsD0c9I1eezoNxBRP7GV5nld+6aTtZl6VjQrOVNP4w0JsjXr9q2VJuG2z+J7WcmvPIWEDJNAyjNdCafs1fN27oXd4r9LgUHx7h/f6o8YBRn0="
+          ],
+          "x5t": "K91kHN4w8wcvB8U4Bk2tVnMDK3k",
+          "x5t#S256": "Ci4yvyO8nTMicQJ--Nn4HU9UpheeigLb0d8STtgGprU"
+        }
+      ]
+    }'
+  trustedCertificateAuthority: |-
+    -----BEGIN CERTIFICATE-----
+    MIIErjCCApYCCQDeffa6ViLglzANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDDA5j
+    YTAwMC5ob21lLmxhbjAeFw0yMDExMDIxNjAxNDFaFw0yMzA4MjMxNjAxNDFaMBkx
+    FzAVBgNVBAMMDmNhMDAwLmhvbWUubGFuMIICIjANBgkqhkiG9w0BAQEFAAOCAg8A
+    MIICCgKCAgEA3KBZTTx0tHvJBnJCVvjvfSpl+OgWIYO80NsSq/6Vu2QUJezZwtG8
+    o1m+JKN4O6WPsyRtcx1aV/4pPTgKKvF07IWFUG11O5Iu88pO5xJ5ssQjJNIuHXwG
+    qxbYxk0fnNUl9mbJchGYxVIH2bJEULe167wnVYsQ2W3xYxzkH0kBJ/iClqf+z0aH
+    zk9l0klS+4TOm2P+a5opi/suUEYKc+oC+KoXzBBa1j9tOpfoGGFCcHk8Ho1X6YE5
+    4YeaCL0EkM7wIrlnJQuepjWbR01L7dVHePTFNxlUtipUkbjeuxPBDylT5DbRrXos
+    DS1EmEJtbDpDs4BE51e0Q+bKOo2a19468iCyAirrSQWbsvat2Mu1LOowqMEF1zpH
+    8BEmMTT8YPbKYB8+8UlUgySQs6jH5DOYFyK4Q2A8HHWjp937LcTm7wiEqbLgSvqL
+    fS1+uw0PrUHSbu1vOJcZepFFw2UmTmwuWDiPWkKSLCFgyol1eJBFSV2uzVnKtO76
+    WV9LH7H9tHM3wCnLuYs0Lmz9aiDZMzwTxhDZyoJt4vLPqAaWi0y+bHNyo8bBK75m
+    bGBQZ4yWGTltu0ZWUGAa9eJ+dfqu6jFpEvGIcm0rVu0Czl2NPn3r4NyRnJWbiGKm
+    f2IjGUbNTW+IimvJ7PZpZShac8qlrGpOs2aiz4HLvWSDye9zIuOCC2kCAwEAATAN
+    BgkqhkiG9w0BAQsFAAOCAgEAPqsor531mVs5ofQjl2PaJxxA5xYenKrENP2YZUus
+    BNsnXlxlk+XaDkMDrRaUqn9C7ZpVOyoEPG7sfmEEQDb+Cmxxlpbu8WZza3FODdSW
+    CDyEDAOcggLX6AmJHs4rs7ebAN8UnPJ+8ULg/FBmHLgbu+sRpGv9Ws+f+5hwPwk2
+    XfgLi6w02CVrvm9zG2JYCartlv0uQmMwwZoNu8i9JFWRPS07fnbEAnOOGTLV4JUC
+    hZoV/pUi3oEe488NGMIv9pVVoCns8Jy/tHYFsvR6e+IaW7GzckElKCi0MwvWCDad
+    9pBexGMBCLapaWtS2lCwgNC0stTFV/fVswUHVxY3S1Q3bI8joaWn0rhdjaLli5Gg
+    cH9STlpIqlIZrob2DDvxE3PMrBRQunRfMCWFsz4It5XZfYSycJgkveIOGmouG0Bh
+    mwOCIfPSjMg0ZLE0MIM8zv0A86PyQbavCOuuiD8G/2fHK604W4iMDhXtED4hKe9D
+    pj/4akfGbxDmN/mFfG0f+0yu55YbTLmar5R1YWnjaQwo8rKDmAyrD95Q2Wt6kYec
+    RZVWmdZ32ASWQF4s1ORLsKJMZkDQEauR9qsX9TODQK25MbiVi6I/tEjVD5YvwoKW
+    eB5SMtlsd5aM1OFB+9PmZj52RXPvhvUJKx/0OmYrkPqlbKXzMhauBYsM4A7SUO0X
+    p0A=
+    -----END CERTIFICATE-----

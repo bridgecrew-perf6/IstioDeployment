@@ -1,0 +1,75 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: qat
+  namespace: istio-system
+spec:
+  profile: default
+  components:
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        # Ingress gateway needs to have IPC_LOCK capability and the
+        # QAT resources manually added, because the template
+        # injection isn't supported for gateways.
+        overlays:
+        - kind: Deployment
+          name: istio-ingressgateway
+          patches:
+          - path: spec.template.spec.containers.[name:istio-proxy].securityContext.capabilities.add
+            value: [ "IPC_LOCK" ]
+        resources:
+          requests:
+            qat.intel.com/generic: '1'
+          limits:
+            qat.intel.com/generic: '1'
+    pilot:
+      k8s:
+        env:
+        - name: PRIVATE_KEY_PROVIDER
+          value: "qat" # this controls the SDS service which configures gateways
+  values:
+    # Annotate pods with either
+    #     inject.istio.io/templates: sidecar,qathw
+    # or
+    #     inject.istio.io/templates: sidecar,cryptomb
+    #
+    # Note: CryptoMB doesn't have any method for guiding the workload to
+    # an AVX-512 enabled node, so when you annotate the pod with the
+    # cryptomb annotation, also set the taints correctly.
+    sidecarInjectorWebhook:
+      templates:
+        qathw: |
+          spec:
+            containers:
+            - name: istio-proxy
+              env:
+              - name: PRIVATE_KEY_PROVIDER
+                value: qat # needed for proxy-agent (data plane Envoys)
+              securityContext:
+                capabilities:
+                  add:
+                  - IPC_LOCK
+              resources:
+                requests:
+                  qat.intel.com/generic: '1'
+                limits:
+                  qat.intel.com/generic: '1'
+        cryptomb: |
+          spec:
+            containers:
+            - name: istio-proxy
+              env:
+              - name: PRIVATE_KEY_PROVIDER
+                value: cryptomb # needed for proxy-agent
+    pilot:
+      # Custom image which has an environmental variable based SDS server
+      image: registry.fi.intel.com/staging/pilot:latest
+    global:
+      proxy:
+        # Custom image which has QAT HW and cryptomb (QAT SW) support
+        # and an environmental variable based SDS server
+        image: registry.fi.intel.com/staging/proxyv2:latest
+    telemetry:
+      enabled: false
